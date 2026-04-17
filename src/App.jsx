@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import {
-  LogOut,
   Plus,
   ReceiptText,
   SplitSquareVertical,
@@ -44,16 +43,43 @@ export default function App() {
   ])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
+    const initAuth = async () => {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession()
+
+      if (sessionError) {
+        console.error('Gagal cek session:', sessionError.message)
+      }
+
+      if (session?.user) {
+        setUser(session.user)
+        setLoading(false)
+        return
+      }
+
+      const { data, error } = await supabase.auth.signInAnonymously()
+
+      if (error) {
+        console.error('Gagal login tamu:', error.message)
+        alert(
+          'Login tamu gagal. Pastikan "Allow anonymous sign-ins" di Supabase sudah aktif.',
+        )
+        setLoading(false)
+        return
+      }
+
+      setUser(data.user ?? null)
       setLoading(false)
-    })
+    }
+
+    initAuth()
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
-      setLoading(false)
     })
 
     return () => subscription.unsubscribe()
@@ -130,34 +156,6 @@ export default function App() {
     }
 
     ambilData()
-  }
-
-  const loginGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin,
-      },
-    })
-
-    if (error) {
-      console.error('Login error:', error.message)
-      alert('Login Google gagal.')
-    }
-  }
-
-  const logout = async () => {
-    const { error } = await supabase.auth.signOut()
-
-    if (error) {
-      console.error('Logout error:', error.message)
-      alert('Logout gagal.')
-      return
-    }
-
-    setUser(null)
-    setData([])
-    setSplits([])
   }
 
   const getBulanTahun = (tgl) =>
@@ -432,14 +430,13 @@ export default function App() {
       `Nagih patungan *${bill.judul}* tanggal ${new Date(bill.tgl).toLocaleDateString('id-ID')} yaa.%0A%0A` +
       `*Rincian kamu:*%0A${rincianMenu}%0A• Pajak + Ongkir: ${formatRupiah(biayaTambahan)}%0A%0A` +
       `*Total: ${formatRupiah(total)}*%0A%0A` +
-      `Transfer ke:%0ABCA 1234567890 a/n Nama Kamu%0Aatau Dana: 081234567890%0A%0A` +
-      `Makasih yaa 🙏%0A%0A_Dikirim dari KeuanganKu_`
+      `Transfer ke:%0ABCA 1234567890 a/n Nama Kamu%0Aatau Dana: 081234567890%0A%0AMakasih yaa 🙏%0A%0A_Dikirim dari KeuanganKu_`
 
     return `https://wa.me/?text=${teks}`
   }
 
   if (loading) {
-    return <div className="min-h-screen grid place-items-center">Loading...</div>
+    return <div className="min-h-screen grid place-items-center">Menyiapkan mode tamu...</div>
   }
 
   if (!user) {
@@ -449,14 +446,8 @@ export default function App() {
           <Wallet className="mx-auto mb-4 text-blue-600" size={48} />
           <h1 className="text-2xl font-bold text-gray-900">KeuanganKu</h1>
           <p className="mt-2 text-sm text-gray-500">
-            Catat pemasukan, pengeluaran, dan split bill dalam satu tempat.
+            Gagal membuat sesi tamu. Cek pengaturan anonymous sign-in di Supabase.
           </p>
-          <button
-            onClick={loginGoogle}
-            className="mt-6 w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700"
-          >
-            Login dengan Google
-          </button>
         </div>
       </div>
     )
@@ -466,17 +457,13 @@ export default function App() {
     <div className="min-h-screen p-4">
       <div className="mx-auto max-w-3xl space-y-4">
         <div className="flex items-center justify-between gap-3">
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-            <Wallet className="text-blue-600" />
-            KeuanganKu
-          </h1>
-
-          <button
-            onClick={logout}
-            className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
-          >
-            <LogOut size={16} /> Logout
-          </button>
+          <div>
+            <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
+              <Wallet className="text-blue-600" />
+              KeuanganKu
+            </h1>
+            <p className="text-sm text-gray-500">Mode tamu aktif</p>
+          </div>
         </div>
 
         <div className="rounded-2xl bg-white p-1 shadow-sm border border-gray-100 flex gap-1">
