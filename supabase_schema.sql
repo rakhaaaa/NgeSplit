@@ -1,5 +1,3 @@
--- Jalankan file SQL ini di Supabase SQL Editor
-
 create extension if not exists "pgcrypto";
 
 create table if not exists public.transaksi (
@@ -44,54 +42,96 @@ alter table public.split_bills enable row level security;
 alter table public.split_bill_menus enable row level security;
 alter table public.split_bill_pesanan enable row level security;
 
+-- =========================
+-- HAPUS POLICY LAMA KALAU ADA
+-- =========================
+
+drop policy if exists "transaksi_select_own" on public.transaksi;
+drop policy if exists "transaksi_insert_own" on public.transaksi;
+drop policy if exists "transaksi_update_own" on public.transaksi;
+drop policy if exists "transaksi_delete_own" on public.transaksi;
+
+drop policy if exists "split_bills_select_own" on public.split_bills;
+drop policy if exists "split_bills_insert_own" on public.split_bills;
+drop policy if exists "split_bills_update_own" on public.split_bills;
+drop policy if exists "split_bills_delete_own" on public.split_bills;
+
+drop policy if exists "split_bill_menus_select_own" on public.split_bill_menus;
+drop policy if exists "split_bill_menus_insert_own" on public.split_bill_menus;
+drop policy if exists "split_bill_menus_update_own" on public.split_bill_menus;
+drop policy if exists "split_bill_menus_delete_own" on public.split_bill_menus;
+
+drop policy if exists "split_bill_pesanan_select_own" on public.split_bill_pesanan;
+drop policy if exists "split_bill_pesanan_insert_own" on public.split_bill_pesanan;
+drop policy if exists "split_bill_pesanan_update_own" on public.split_bill_pesanan;
+drop policy if exists "split_bill_pesanan_delete_own" on public.split_bill_pesanan;
+
+-- =========================
 -- TRANSAKSI
-create policy if not exists "transaksi_select_own"
+-- =========================
+
+create policy "transaksi_select_own"
 on public.transaksi
 for select
+to authenticated
 using (auth.uid() = user_id);
 
-create policy if not exists "transaksi_insert_own"
+create policy "transaksi_insert_own"
 on public.transaksi
 for insert
+to authenticated
 with check (auth.uid() = user_id);
 
-create policy if not exists "transaksi_update_own"
+create policy "transaksi_update_own"
 on public.transaksi
 for update
+to authenticated
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
 
-create policy if not exists "transaksi_delete_own"
+create policy "transaksi_delete_own"
 on public.transaksi
 for delete
+to authenticated
 using (auth.uid() = user_id);
 
+-- =========================
 -- SPLIT BILLS
-create policy if not exists "split_bills_select_own"
+-- =========================
+
+create policy "split_bills_select_own"
 on public.split_bills
 for select
+to authenticated
 using (auth.uid() = user_id);
 
-create policy if not exists "split_bills_insert_own"
+create policy "split_bills_insert_own"
 on public.split_bills
 for insert
+to authenticated
 with check (auth.uid() = user_id);
 
-create policy if not exists "split_bills_update_own"
+create policy "split_bills_update_own"
 on public.split_bills
 for update
+to authenticated
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
 
-create policy if not exists "split_bills_delete_own"
+create policy "split_bills_delete_own"
 on public.split_bills
 for delete
+to authenticated
 using (auth.uid() = user_id);
 
--- SPLIT BILL MENUS: ikut user dari parent split_bills
-create policy if not exists "split_bill_menus_select_own"
+-- =========================
+-- SPLIT BILL MENUS
+-- =========================
+
+create policy "split_bill_menus_select_own"
 on public.split_bill_menus
 for select
+to authenticated
 using (
   exists (
     select 1
@@ -101,9 +141,10 @@ using (
   )
 );
 
-create policy if not exists "split_bill_menus_insert_own"
+create policy "split_bill_menus_insert_own"
 on public.split_bill_menus
 for insert
+to authenticated
 with check (
   exists (
     select 1
@@ -113,9 +154,10 @@ with check (
   )
 );
 
-create policy if not exists "split_bill_menus_update_own"
+create policy "split_bill_menus_update_own"
 on public.split_bill_menus
 for update
+to authenticated
 using (
   exists (
     select 1
@@ -133,9 +175,10 @@ with check (
   )
 );
 
-create policy if not exists "split_bill_menus_delete_own"
+create policy "split_bill_menus_delete_own"
 on public.split_bill_menus
 for delete
+to authenticated
 using (
   exists (
     select 1
@@ -145,10 +188,14 @@ using (
   )
 );
 
--- SPLIT BILL PESANAN: ikut user dari parent menu -> split_bill
-create policy if not exists "split_bill_pesanan_select_own"
+-- =========================
+-- SPLIT BILL PESANAN
+-- =========================
+
+create policy "split_bill_pesanan_select_own"
 on public.split_bill_pesanan
 for select
+to authenticated
 using (
   exists (
     select 1
@@ -159,9 +206,10 @@ using (
   )
 );
 
-create policy if not exists "split_bill_pesanan_insert_own"
+create policy "split_bill_pesanan_insert_own"
 on public.split_bill_pesanan
 for insert
+to authenticated
 with check (
   exists (
     select 1
@@ -172,9 +220,10 @@ with check (
   )
 );
 
-create policy if not exists "split_bill_pesanan_update_own"
+create policy "split_bill_pesanan_update_own"
 on public.split_bill_pesanan
 for update
+to authenticated
 using (
   exists (
     select 1
@@ -194,9 +243,10 @@ with check (
   )
 );
 
-create policy if not exists "split_bill_pesanan_delete_own"
+create policy "split_bill_pesanan_delete_own"
 on public.split_bill_pesanan
 for delete
+to authenticated
 using (
   exists (
     select 1
